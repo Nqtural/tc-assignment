@@ -5,7 +5,7 @@ import Home from './components/Home.vue';
 </script>
 
 <template>
-  <router-link to="/login">Login</router-link> |
+  <router-link to="Home">Home</router-link> |
   <router-view />
 </template>
 
