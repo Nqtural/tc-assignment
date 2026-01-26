@@ -5,9 +5,8 @@ import Home from './components/Home.vue';
 </script>
 
 <template>
-  <Navbar/>
-  <Login />
-  <Home/>
+  <router-link to="/login">Login</router-link> |
+  <router-view />
 </template>
 
 <style scoped></style>
