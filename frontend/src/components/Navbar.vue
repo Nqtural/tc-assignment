@@ -2,9 +2,7 @@
 </script>
 
 <template>
-
 <nav>
-
     <ul class="nav-list">
         <li class="dropdown">
             <a href="#">Menu</a>
@@ -16,7 +14,6 @@
             </div>
         </li>
     </ul>
-
 
     <div class="profile">
         <img src="https://via.placeholder.com/40x40/666/fff?text=US" alt="User Avatar" style="border-radius: 50%;">
@@ -31,5 +28,6 @@
     </div>
 </nav>
 </template>
+
 <style>
 </style>
