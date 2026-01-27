@@ -10,14 +10,14 @@ use backend::user;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cfg = Config::new("users.sqlite3");
+    let cfg = Config::new("db.sqlite3");
     let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
 
     {
         let conn = pool.get().await.unwrap();
         conn.interact(|conn| {
             conn.execute(
-                "CREATE TABLE IF NOT EXISTS user (
+                "CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
                     surname TEXT NOT NULL,
@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             )?;
 
             conn.execute(
-                "INSERT INTO user (name, surname, password_hash, email)
+                "INSERT INTO users (name, surname, password_hash, email)
                 VALUES (?1, ?2, ?3, ?4)",
                 params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
             )?;
@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // debug: print database
     let _ = pool.get().await?.interact(|conn| {
-        let mut stmt = conn.prepare("SELECT id, name, surname, password_hash, email FROM user")?;
+        let mut stmt = conn.prepare("SELECT id, name, surname, password_hash, email FROM users")?;
         let users = stmt.query_map([], |row| {
             Ok(user::User {
                 id: row.get(0)?,
