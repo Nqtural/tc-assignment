@@ -1,0 +1,9 @@
+#!/bin/env sh
+curl -X POST 0.0.0.0:3000/auth/login \
+	-H "Content-Type: application/json" \
+	-d '
+{
+	"password": "Pass123",
+	"email": "NOT-REGISTER-USER@example.com"
+}
+'
