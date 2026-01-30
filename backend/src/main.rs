@@ -38,7 +38,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
             )?;
 
-
             Ok::<_, rusqlite::Error>(())
         })
             .await
