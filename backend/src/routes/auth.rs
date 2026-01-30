@@ -48,7 +48,6 @@ pub async fn register(
             (StatusCode::CONFLICT, Json(RegisterStatus::UserAlreadyExists))
         }
         Ok(None) => {
-            println!("debug: hashing {}", &user.password);
             let password_hash = match hash_password(&user.password) {
                 Ok(h) => h,
                 Err(e) => {
@@ -135,12 +134,11 @@ pub async fn login(
                     if success {
                         (StatusCode::OK, Json(LoginStatus::Success))
                     } else {
-                        eprintln!("{} does not verify with {}", &user.password, existing_hash);
                         (StatusCode::UNAUTHORIZED, Json(LoginStatus::InvalidCredentials))
                     }
                 },
                 Err(e) => {
-                    eprintln!("failed to verify password: {e}");
+                    eprintln!("Failed to verify password: {e}");
                     (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError))
                 }
             }
