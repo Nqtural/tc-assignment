@@ -60,6 +60,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::<Pool>::new()
         .route("/health", get(routes::health::health))
         .route("/auth/register", post(routes::auth::register))
+        .with_state(pool.clone())
+        .route("/auth/login", post(routes::auth::login))
         .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
