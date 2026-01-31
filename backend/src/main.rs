@@ -5,6 +5,7 @@ use axum::{
 };
 use deadpool_sqlite::{Config, Pool, Runtime};
 use deadpool_sqlite::rusqlite::{self, params};
+use tower_cookies::CookieManagerLayer;
 use backend::routes;
 use backend::user;
 
@@ -37,6 +38,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     email = excluded.email",
                 params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
             )?;
+            
+            conn.execute("DROP TABLE IF EXISTS sessions", [])?;
+            conn.execute(
+                "CREATE TABLE sessions (
+                    uuid TEXT PRIMARY KEY,
+                    user_id INTEGER NOT NULL
+                )",
+                [],
+            )?;
 
             Ok::<_, rusqlite::Error>(())
         })
@@ -44,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap()?;
     }
 
-    // debug: print database
+    // debug: print users database table
     let _ = pool.get().await?.interact(|conn| {
         let mut stmt = conn.prepare("SELECT id, name, surname, password_hash, email FROM users")?;
         let users = stmt.query_map([], |row| {
@@ -66,8 +76,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/health", get(routes::health::health))
         .route("/auth/register", post(routes::auth::register))
         .with_state(pool.clone())
+        .route("/auth/is_logged_in", post(routes::auth::is_logged_in))
+        .with_state(pool.clone())
         .route("/auth/login", post(routes::auth::login))
-        .with_state(pool);
+        .with_state(pool)
+        .layer(CookieManagerLayer::new());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();

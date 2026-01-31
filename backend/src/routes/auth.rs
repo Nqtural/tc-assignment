@@ -7,6 +7,8 @@ use bcrypt::{hash, DEFAULT_COST};
 use deadpool_sqlite::Pool;
 use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 use serde::{Deserialize, Serialize};
+use tower_cookies::{Cookies, Cookie};
+use uuid::Uuid;
 use crate::user::NewUser;
 
 #[derive(Serialize)]
@@ -48,7 +50,6 @@ pub async fn register(
             (StatusCode::CONFLICT, Json(RegisterStatus::UserAlreadyExists))
         }
         Ok(None) => {
-            println!("debug: hashing {}", &user.password);
             let password_hash = match hash_password(&user.password) {
                 Ok(h) => h,
                 Err(e) => {
@@ -90,6 +91,56 @@ pub async fn register(
 }
 
 #[derive(Serialize)]
+enum LoggedInStatus {
+    LoggedIn,
+    LoggedOut,
+    InternalServerError,
+}
+
+pub async fn is_logged_in(
+    State(pool): State<Pool>,
+    cookies: Cookies,
+) -> impl IntoResponse {
+    let conn = match pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            eprintln!("Database pool error: failed to get connection: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LoggedInStatus::InternalServerError));
+        }
+    };
+
+    let session_uuid = match cookies.get("session_uuid") {
+        Some(c) => c.value().to_owned(),
+        None => {
+            eprintln!("debug: user does not have session_uuid cookie");
+            return (StatusCode::OK, Json(LoggedInStatus::LoggedOut));
+        }
+    };
+
+    let existing_session: Result<Option<i64>, _> = conn
+        .interact(move |conn| {
+            conn.query_row(
+                "SELECT user_id FROM sessions WHERE uuid = ?1",
+                params![session_uuid],
+                |row| row.get::<_, i64>(0),
+            )
+                .optional()
+        })
+        .await
+        .map_err(|e| eprintln!("Pool interact error (checking existing user): {e}"))
+        .unwrap_or(Ok(None));
+
+    match existing_session {
+        Ok(Some(_)) => (StatusCode::OK, Json(LoggedInStatus::LoggedIn)),
+        Ok(None) => (StatusCode::OK, Json(LoggedInStatus::LoggedOut)),
+        Err(e) => {
+            eprintln!("Database error checking existing user: {e}");
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(LoggedInStatus::InternalServerError))
+        }
+    }
+}
+
+#[derive(Serialize)]
 enum LoginStatus {
     Success,
     UserDoesNotExist,
@@ -105,6 +156,7 @@ pub struct LoginRequest {
 
 pub async fn login(
     State(pool): State<Pool>,
+    cookies: Cookies,
     Json(user): Json<LoginRequest>,
 ) -> impl IntoResponse {
     let conn = match pool.get().await {
@@ -115,12 +167,15 @@ pub async fn login(
         }
     };
 
-    let existing_user_password_hash: Result<Option<String>, _> = conn
+    let existing_user: Result<Option<(i64, String)>, _> = conn
         .interact(move |conn| {
             conn.query_row(
-                "SELECT password_hash FROM users WHERE email = ?1",
+                "SELECT id, password_hash FROM users WHERE email = ?1",
                 params![user.email],
-                |row| row.get::<_, String>(0),
+                |row| Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                )),
             )
                 .optional()
         })
@@ -128,26 +183,49 @@ pub async fn login(
         .map_err(|e| eprintln!("Pool interact error (checking existing user): {e}"))
         .unwrap_or(Ok(None));
 
-    match existing_user_password_hash {
-        Ok(Some(existing_hash)) => {
+    match existing_user {
+        Ok(Some((user_id, existing_hash))) => {
             match bcrypt::verify(&user.password, &existing_hash) {
                 Ok(success) => {
                     if success {
+                        // create a session ID
+                        let session_uuid = Uuid::new_v4().to_string();
+
+                        // store it in the database
+                        let session_uuid_clone = session_uuid.clone();
+                        if let Err(e) = conn.interact(move |conn| {
+                            conn.execute(
+                                "INSERT INTO sessions (uuid, user_id) VALUES (?1, ?2)",
+                                params![session_uuid_clone, user_id],
+                            )
+                        }).await {
+                            eprintln!("Failed to create session: {e}");
+                            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError));
+                        }
+
+                        // set the cookie
+                        let c = Cookie::build(("session_uuid", session_uuid))
+                            .path("/")
+                            .http_only(true);
+                            // we don't run server/frontend over https yet
+                            //.secure(true); // only over HTTPS
+
+                        cookies.add(c.into());
+
                         (StatusCode::OK, Json(LoginStatus::Success))
                     } else {
-                        eprintln!("{} does not verify with {}", &user.password, existing_hash);
                         (StatusCode::UNAUTHORIZED, Json(LoginStatus::InvalidCredentials))
                     }
-                },
+                }
                 Err(e) => {
-                    eprintln!("failed to verify password: {e}");
+                    eprintln!("Failed to verify password: {e}");
                     (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError))
                 }
             }
         }
         Ok(None) => {
-            eprintln!("Password hashing failed: no password found for user");
-            (StatusCode::NOT_FOUND, Json(LoginStatus::UserDoesNotExist))
+            eprintln!("User does not exist");
+            (StatusCode::NOT_ACCEPTABLE, Json(LoginStatus::UserDoesNotExist))
         }
         Err(e) => {
             eprintln!("Database error checking existing user: {e}");
