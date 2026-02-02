@@ -1,3 +1,4 @@
+use std::env;
 use axum::{
     routing::get,
     routing::post,
@@ -11,6 +12,22 @@ use backend::user;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let mut dev = false;
+
+    for arg in env::args().skip(1) {
+        match arg.as_str() {
+            "--dev" => dev = true,
+            _ => {
+                println!(" ");
+            }
+        }
+    }
+
+    if dev {
+        println!("dev mode")
+    }
+
     let cfg = Config::new("db.sqlite3");
     let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
 
@@ -36,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     surname = excluded.surname,
                     password_hash = excluded.password_hash,
                     email = excluded.email",
-                params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
+                    params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
             )?;
             
             conn.execute("DROP TABLE IF EXISTS sessions", [])?;
@@ -50,9 +67,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             Ok::<_, rusqlite::Error>(())
         })
-            .await
+        .await
             .unwrap()?;
-    }
+        }
 
     // debug: print users database table
     let _ = pool.get().await?.interact(|conn| {
