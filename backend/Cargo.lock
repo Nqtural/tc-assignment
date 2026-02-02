@@ -67,9 +67,11 @@ dependencies = [
  "axum",
  "bcrypt",
  "deadpool-sqlite",
+ "http",
  "serde",
  "tokio",
  "tower-cookies",
+ "tower-http",
  "uuid",
 ]
 
@@ -862,6 +864,20 @@ dependencies = [
  "futures-util",
  "http",
  "parking_lot",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
+name = "tower-http"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4e6559d53cc268e5031cd8429d05415bc4cb4aefc4aa5d6cc35fbf5b924a1f8"
+dependencies = [
+ "bitflags",
+ "bytes",
+ "http",
  "pin-project-lite",
  "tower-layer",
  "tower-service",

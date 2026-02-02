@@ -1,4 +1,3 @@
-use std::env;
 use axum::{
     routing::get,
     routing::post,
@@ -9,25 +8,10 @@ use deadpool_sqlite::rusqlite::{self, params};
 use tower_cookies::CookieManagerLayer;
 use backend::routes;
 use backend::user;
+use backend::cors::dev_cors;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    let mut dev = false;
-
-    for arg in env::args().skip(1) {
-        match arg.as_str() {
-            "--dev" => dev = true,
-            _ => {
-                println!(" ");
-            }
-        }
-    }
-
-    if dev {
-        println!("dev mode")
-    }
-
     let cfg = Config::new("db.sqlite3");
     let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
 
@@ -67,9 +51,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             Ok::<_, rusqlite::Error>(())
         })
-        .await
+            .await
             .unwrap()?;
-        }
+    }
 
     // debug: print users database table
     let _ = pool.get().await?.interact(|conn| {
@@ -97,7 +81,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(pool.clone())
         .route("/auth/login", post(routes::auth::login))
         .with_state(pool)
-        .layer(CookieManagerLayer::new());
+        .layer(CookieManagerLayer::new())
+        // always dev mode for now
+        .layer(dev_cors());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
