@@ -4,22 +4,21 @@ use axum::{
     routing::post,
     Router,
 };
-use deadpool_sqlite::Pool;
 use tower_cookies::CookieManagerLayer;
-use backend::{data, routes};
+use backend::{data::Database, routes};
 use backend::cors::dev_cors;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let database = data::Database::new().await?;
+    let database = Database::new().await?;
 
-    let app = Router::<Pool>::new()
+    let app = Router::<Database>::new()
         .route("/health", get(routes::health::health))
         .route("/auth/register", post(routes::auth::register))
         .route("/auth/is_logged_in", post(routes::auth::is_logged_in))
         .route("/auth/login", post(routes::auth::login))
         .route("/auth/logout", post(routes::auth::logout))
-        .with_state(database.pool)
+        .with_state(database)
         .layer(CookieManagerLayer::new())
         // always dev mode for now
         .layer(dev_cors());

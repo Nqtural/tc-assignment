@@ -2,6 +2,7 @@ use anyhow::Result;
 use deadpool_sqlite::{Config, Pool, Runtime};
 use deadpool_sqlite::rusqlite::{self, params};
 
+#[derive(Clone)]
 pub struct Database {
     pub pool: Pool,
 }

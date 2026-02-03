@@ -1,0 +1,47 @@
+use anyhow::{anyhow, Result};
+use deadpool_sqlite::rusqlite::{OptionalExtension, params};
+
+use super::Database;
+use super::utils;
+use crate::user::NewUser;
+
+pub enum RegisterOutcome {
+    Success,
+    UserAlreadyExists,
+}
+
+impl Database {
+    pub async fn register_user(&self, user: NewUser) -> Result<RegisterOutcome> {
+        let conn = self.pool.get().await?;
+
+        let email = user.email.clone();
+        let existing_user: Option<i64> = conn
+            .interact(move |conn| {
+                conn.query_row(
+                    "SELECT id FROM users WHERE email = ?1",
+                    params![email],
+                    |row| row.get::<_, i64>(0),
+                )
+                .optional()
+            })
+            .await
+            .map_err(|e| anyhow!("{e}"))??;
+
+        if existing_user.is_some() {
+            return Ok(RegisterOutcome::UserAlreadyExists);
+        }
+
+        let password_hash = utils::hash_password(&user.password)?;
+
+        conn.interact(move |conn| {
+            conn.execute(
+                "INSERT INTO users (email, name, surname, password_hash) VALUES (?1, ?2, ?3, ?4)",
+                params![user.email, user.name, user.surname, password_hash],
+            )
+        })
+        .await
+        .map_err(|e| anyhow!("{e}"))??;
+
+        Ok(RegisterOutcome::Success)
+    }
+}
