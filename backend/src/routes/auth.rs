@@ -234,6 +234,97 @@ pub async fn login(
     }
 }
 
+#[derive(Serialize)]
+enum LogoutStatus {
+    Success,
+    NotLoggedIn,
+    InternalServerError,
+}
+
+pub async fn logout(
+    State(pool): State<Pool>,
+    cookies: Cookies,
+) -> impl IntoResponse {
+    let conn = match pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            eprintln!("Database pool error: failed to get connection: {e}");
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LogoutStatus::InternalServerError));
+        }
+    };
+
+    let session_uuid = match cookies.get("session_uuid") {
+        Some(c) => c.value().to_owned(),
+        None => {
+            eprintln!("debug: user does not have session_uuid cookie");
+            return (StatusCode::OK, Json(LogoutStatus::NotLoggedIn));
+        }
+    };
+
+    let session_uuid_clone = session_uuid.clone();
+    let existing_session: Result<Option<i64>, _> = conn
+        .interact(move |conn| {
+            conn.query_row(
+                "SELECT user_id FROM sessions WHERE uuid = ?1",
+                params![session_uuid_clone],
+                |row| row.get::<_, i64>(0),
+            )
+                .optional()
+        })
+        .await
+        .map_err(|e| eprintln!("Pool interact error (checking existing user): {e}"))
+        .unwrap_or(Ok(None));
+
+    match existing_session {
+        Ok(Some(_user_id)) => {
+            let delete_result = conn
+                .interact(move |conn| {
+                    conn.execute(
+                        "DELETE FROM sessions WHERE uuid = ?1",
+                        params![session_uuid],
+                    )
+                })
+            .await;
+
+            match delete_result {
+                Ok(Ok(_)) => (
+                    StatusCode::OK,
+                    Json(LogoutStatus::Success),
+                ),
+
+                Ok(Err(e)) => {
+                    eprintln!("SQLite error deleting session: {e}");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(LogoutStatus::InternalServerError),
+                    )
+                }
+
+                Err(e) => {
+                    eprintln!("Interact error deleting session: {e}");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(LogoutStatus::InternalServerError),
+                    )
+                }
+            }
+        }
+
+        Ok(None) => (
+            StatusCode::OK,
+            Json(LogoutStatus::NotLoggedIn),
+        ),
+
+        Err(e) => {
+            eprintln!("Database error checking existing user: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(LogoutStatus::InternalServerError),
+            )
+        }
+    }
+}
+
 fn hash_password(password: &str) -> Result<String, bcrypt::BcryptError> {
     hash(password, DEFAULT_COST)
 }

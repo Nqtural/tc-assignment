@@ -80,6 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/auth/is_logged_in", post(routes::auth::is_logged_in))
         .with_state(pool.clone())
         .route("/auth/login", post(routes::auth::login))
+        .with_state(pool.clone())
+        .route("/auth/logout", post(routes::auth::logout))
         .with_state(pool)
         .layer(CookieManagerLayer::new())
         // always dev mode for now
