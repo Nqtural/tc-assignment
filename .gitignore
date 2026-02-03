@@ -1,4 +1,5 @@
 backend/test-scripts/cookies.txt
+backend/cookies.txt
 backend/db.sqlite3
 backend/target/
 
