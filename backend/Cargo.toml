@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
 axum = "0.8.8"
 bcrypt = "0.18.0"
 deadpool-sqlite = "0.12.1"
