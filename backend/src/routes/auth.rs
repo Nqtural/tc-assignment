@@ -6,9 +6,46 @@ use axum::{
 use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 use tower_cookies::{Cookies, Cookie};
-use uuid::Uuid;
-use crate::data::{Database, RegisterOutcome};
+use crate::data::{Database, LoginOutcome, RegisterOutcome};
 use crate::user::NewUser;
+
+#[derive(Serialize)]
+enum LoginStatus {
+    Success,
+    UserDoesNotExist,
+    InvalidCredentials,
+    InternalServerError,
+}
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+pub async fn login(
+    State(db): State<Database>,
+    cookies: Cookies,
+    Json(user): Json<LoginRequest>,
+) -> impl IntoResponse {
+    match db.login_user(user.email, user.password).await {
+        Ok(LoginOutcome::Success(session_uuid)) => {
+            // set the cookie
+            let c = Cookie::build(("session_uuid", session_uuid))
+                .path("/")
+                .http_only(true);
+                // we don't run server/frontend over https yet
+                //.secure(true); // only over HTTPS
+
+            cookies.add(c.into());
+
+            (StatusCode::OK, Json(LoginStatus::Success))
+        }
+        Ok(LoginOutcome::UserDoesNotExist) => (StatusCode::NOT_ACCEPTABLE, Json(LoginStatus::UserDoesNotExist)),
+        Ok(LoginOutcome::InvalidCredentials) => (StatusCode::UNAUTHORIZED, Json(LoginStatus::InvalidCredentials)),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError)),
+    }
+}
 
 #[derive(Serialize)]
 pub enum RegisterStatus {
@@ -77,100 +114,6 @@ pub async fn is_logged_in(
         Err(e) => {
             eprintln!("Database error checking existing user: {e}");
             (StatusCode::INTERNAL_SERVER_ERROR, Json(LoggedInStatus::InternalServerError))
-        }
-    }
-}
-
-#[derive(Serialize)]
-enum LoginStatus {
-    Success,
-    UserDoesNotExist,
-    InvalidCredentials,
-    InternalServerError,
-}
-
-#[derive(Deserialize)]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
-
-pub async fn login(
-    State(db): State<Database>,
-    cookies: Cookies,
-    Json(user): Json<LoginRequest>,
-) -> impl IntoResponse {
-    let conn = match db.pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            eprintln!("Database pool error: failed to get connection: {e}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError));
-        }
-    };
-
-    let existing_user: Result<Option<(i64, String)>, _> = conn
-        .interact(move |conn| {
-            conn.query_row(
-                "SELECT id, password_hash FROM users WHERE email = ?1",
-                params![user.email],
-                |row| Ok((
-                    row.get::<_, i64>(0)?,
-                    row.get::<_, String>(1)?,
-                )),
-            )
-                .optional()
-        })
-        .await
-        .map_err(|e| eprintln!("Pool interact error (checking existing user): {e}"))
-        .unwrap_or(Ok(None));
-
-    match existing_user {
-        Ok(Some((user_id, existing_hash))) => {
-            match bcrypt::verify(&user.password, &existing_hash) {
-                Ok(success) => {
-                    if success {
-                        // create a session ID
-                        let session_uuid = Uuid::new_v4().to_string();
-
-                        // store it in the database
-                        let session_uuid_clone = session_uuid.clone();
-                        if let Err(e) = conn.interact(move |conn| {
-                            conn.execute(
-                                "INSERT INTO sessions (uuid, user_id) VALUES (?1, ?2)",
-                                params![session_uuid_clone, user_id],
-                            )
-                        }).await {
-                            eprintln!("Failed to create session: {e}");
-                            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError));
-                        }
-
-                        // set the cookie
-                        let c = Cookie::build(("session_uuid", session_uuid))
-                            .path("/")
-                            .http_only(true);
-                            // we don't run server/frontend over https yet
-                            //.secure(true); // only over HTTPS
-
-                        cookies.add(c.into());
-
-                        (StatusCode::OK, Json(LoginStatus::Success))
-                    } else {
-                        (StatusCode::UNAUTHORIZED, Json(LoginStatus::InvalidCredentials))
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to verify password: {e}");
-                    (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError))
-                }
-            }
-        }
-        Ok(None) => {
-            eprintln!("User does not exist");
-            (StatusCode::NOT_ACCEPTABLE, Json(LoginStatus::UserDoesNotExist))
-        }
-        Err(e) => {
-            eprintln!("Database error checking existing user: {e}");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(LoginStatus::InternalServerError))
         }
     }
 }
