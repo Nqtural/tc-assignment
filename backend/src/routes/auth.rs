@@ -72,50 +72,24 @@ pub async fn register(
 enum LoggedInStatus {
     LoggedIn,
     LoggedOut,
-    InternalServerError,
 }
 
 pub async fn is_logged_in(
     State(db): State<Database>,
     cookies: Cookies,
 ) -> impl IntoResponse {
-    let conn = match db.pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            eprintln!("Database db.pool error: failed to get connection: {e}");
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(LoggedInStatus::InternalServerError));
+    let status = match cookies.get("session_uuid") {
+        Some(c) => {
+            if db.verify_session(c.value().to_string()).await.unwrap_or(false) {
+                LoggedInStatus::LoggedIn
+            } else {
+                LoggedInStatus::LoggedOut
+            }
         }
+        None => LoggedInStatus::LoggedOut,
     };
 
-    let session_uuid = match cookies.get("session_uuid") {
-        Some(c) => c.value().to_owned(),
-        None => {
-            eprintln!("debug: user does not have session_uuid cookie");
-            return (StatusCode::OK, Json(LoggedInStatus::LoggedOut));
-        }
-    };
-
-    let existing_session: Result<Option<i64>, _> = conn
-        .interact(move |conn| {
-            conn.query_row(
-                "SELECT user_id FROM sessions WHERE uuid = ?1",
-                params![session_uuid],
-                |row| row.get::<_, i64>(0),
-            )
-                .optional()
-        })
-        .await
-        .map_err(|e| eprintln!("Pool interact error (checking existing user): {e}"))
-        .unwrap_or(Ok(None));
-
-    match existing_session {
-        Ok(Some(_)) => (StatusCode::OK, Json(LoggedInStatus::LoggedIn)),
-        Ok(None) => (StatusCode::OK, Json(LoggedInStatus::LoggedOut)),
-        Err(e) => {
-            eprintln!("Database error checking existing user: {e}");
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(LoggedInStatus::InternalServerError))
-        }
-    }
+    (StatusCode::OK, Json(status))
 }
 
 #[derive(Serialize)]
