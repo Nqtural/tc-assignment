@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use deadpool_sqlite::{Config, Pool, Runtime};
 use deadpool_sqlite::rusqlite::{self, params};
 
@@ -10,10 +10,10 @@ pub struct Database {
 impl Database {
     pub async fn new() -> Result<Self> {
         let cfg = Config::new("db.sqlite3");
-        let pool = cfg.create_pool(Runtime::Tokio1).unwrap();
+        let pool = cfg.create_pool(Runtime::Tokio1)?;
 
         {
-            let conn = pool.get().await.unwrap();
+            let conn = pool.get().await?;
             conn.interact(|conn| {
                 conn.execute(
                     "CREATE TABLE IF NOT EXISTS users (
@@ -49,7 +49,7 @@ impl Database {
                 Ok::<_, rusqlite::Error>(())
             })
                 .await
-                .unwrap()?;
+                .map_err(|e| anyhow!("{e}"))??;
         }
 
         Ok(Self { pool })
