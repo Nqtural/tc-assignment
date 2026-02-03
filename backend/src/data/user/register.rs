@@ -3,7 +3,7 @@ use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 
 use super::super::Database;
 use super::super::utils;
-use crate::user::NewUser;
+use crate::types::NewUser;
 
 pub enum RegisterOutcome {
     Success,

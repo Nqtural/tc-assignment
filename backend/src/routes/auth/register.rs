@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::Serialize;
 use crate::data::{Database, RegisterOutcome};
-use crate::user::NewUser;
+use crate::types::NewUser;
 
 #[derive(Serialize)]
 pub enum RegisterStatus {
