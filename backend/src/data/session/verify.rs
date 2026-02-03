@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 
-use super::Database;
+use super::super::Database;
 
 impl Database {
     pub async fn verify_session(&self, session_uuid: String) -> Result<bool> {

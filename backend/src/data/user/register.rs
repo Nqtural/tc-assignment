@@ -1,8 +1,8 @@
 use anyhow::{anyhow, Result};
 use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 
-use super::Database;
-use super::utils;
+use super::super::Database;
+use super::super::utils;
 use crate::user::NewUser;
 
 pub enum RegisterOutcome {

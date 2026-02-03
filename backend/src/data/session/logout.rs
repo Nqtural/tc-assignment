@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use deadpool_sqlite::rusqlite::params;
 
-use super::Database;
+use super::super::Database;
 
 pub enum LogoutOutcome {
     Success,

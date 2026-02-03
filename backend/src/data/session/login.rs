@@ -3,7 +3,7 @@ use bcrypt::verify;
 use deadpool_sqlite::rusqlite::{OptionalExtension, params};
 use uuid::Uuid;
 
-use super::Database;
+use super::super::Database;
 
 pub enum LoginOutcome {
     Success(String),
