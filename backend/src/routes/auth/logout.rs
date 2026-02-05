@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::Serialize;
 use tower_cookies::Cookies;
+
 use crate::data::{Database, LogoutOutcome};
 
 #[derive(Serialize)]

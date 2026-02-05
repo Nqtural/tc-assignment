@@ -1,6 +1,10 @@
 mod database;
 pub use database::Database;
 
+mod rooms;
+pub use rooms::CreateRoomOutcome;
+pub use rooms::GetRoomOutcome;
+
 mod session;
 pub use session::LoginOutcome;
 pub use session::LogoutOutcome;

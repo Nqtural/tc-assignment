@@ -58,6 +58,26 @@ impl Database {
                     [],
                 )?;
 
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS rooms (
+                        id INTEGER PRIMARY KEY,
+                        owner INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT
+                    )",
+                    [],
+                )?;
+
+                // To link users to rooms
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS room_members (
+                        room_id INTEGER NOT NULL,
+                        user_id INTEGER NOT NULL,
+                        PRIMARY KEY (room_id, user_id)
+                    )",
+                    [],
+                )?;
+
                 Ok::<_, rusqlite::Error>(())
             })
                 .await

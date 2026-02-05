@@ -4,6 +4,7 @@ use axum::{
     response::IntoResponse,
 };
 use serde::Serialize;
+
 use crate::data::{Database, RegisterOutcome};
 use crate::types::NewUser;
 
