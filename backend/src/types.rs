@@ -25,6 +25,7 @@ pub struct NewRoom {
 
 #[derive(Serialize)]
 pub struct Room {
+    pub id: i32,
     pub name: String,
     pub description: String,
 }

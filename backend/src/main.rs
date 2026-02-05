@@ -1,7 +1,6 @@
 use anyhow::Result;
 use axum::{
-    routing::get,
-    routing::post,
+    routing::{delete, get, post},
     Router,
 };
 use tower_cookies::CookieManagerLayer;
@@ -35,6 +34,7 @@ async fn main() -> Result<()> {
         .route("/auth/register", post(routes::auth::register))
         .route("/health", get(routes::health::health))
         .route("/rooms/create", post(routes::rooms::create))
+        .route("/rooms/delete/{id}", delete(routes::rooms::delete))
         .route("/rooms/get", get(routes::rooms::get))
         .with_state(database)
         .layer(CookieManagerLayer::new())

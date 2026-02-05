@@ -34,7 +34,7 @@ impl Database {
             .interact(move |conn| -> Result<Vec<Room>> {
                 let mut stmt = conn.prepare(
                     "
-                    SELECT r.name, r.description
+                    SELECT r.id, r.name, r.description
                     FROM rooms r
                     JOIN room_members rm ON rm.room_id = r.id
                     WHERE rm.user_id = ?1
@@ -43,8 +43,9 @@ impl Database {
 
                 let rooms_iter = stmt.query_map(params![user_id], |row| {
                     Ok(Room {
-                        name: row.get(0)?,
-                        description: row.get(1)?,
+                        id: row.get(0)?,
+                        name: row.get(1)?,
+                        description: row.get(2)?,
                     })
                 })?;
 
