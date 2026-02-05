@@ -78,6 +78,17 @@ impl Database {
                     [],
                 )?;
 
+                // Refresh keys every server restart
+                conn.execute("DROP TABLE IF EXISTS invitation_keys", [])?;
+                conn.execute(
+                    "CREATE TABLE invitation_keys (
+                        room_id INTEGER NOT NULL,
+                        key STRING NOT NULL,
+                        PRIMARY KEY (room_id, key)
+                    )",
+                    [],
+                )?;
+
                 Ok::<_, rusqlite::Error>(())
             })
                 .await

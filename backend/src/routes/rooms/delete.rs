@@ -27,7 +27,7 @@ pub async fn delete(
             Ok(DeleteRoomOutcome::NotLoggedIn) => (StatusCode::UNAUTHORIZED, Json(DeleteRoomStatus::NotLoggedIn)),
             Ok(DeleteRoomOutcome::NotOwner) => (StatusCode::UNAUTHORIZED, Json(DeleteRoomStatus::NotOwner)),
             Err(e) => {
-                eprintln!("Create room error: {e}");
+                eprintln!("Delete room error: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(DeleteRoomStatus::InternalServerError))
             }
         }

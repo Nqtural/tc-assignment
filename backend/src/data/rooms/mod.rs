@@ -6,3 +6,6 @@ pub use delete::DeleteRoomOutcome;
 
 mod get;
 pub use get::GetRoomOutcome;
+
+mod invitation_code;
+pub use invitation_code::InvitationCodeOutcome;

@@ -34,8 +34,9 @@ async fn main() -> Result<()> {
         .route("/auth/register", post(routes::auth::register))
         .route("/health", get(routes::health::health))
         .route("/rooms/create", post(routes::rooms::create))
-        .route("/rooms/delete/{id}", delete(routes::rooms::delete))
         .route("/rooms/get", get(routes::rooms::get))
+        .route("/rooms/{id}/delete", delete(routes::rooms::delete))
+        .route("/rooms/{id}/invitation-code", get(routes::rooms::invitation_code))
         .with_state(database)
         .layer(CookieManagerLayer::new())
         .layer(cors_layer);
