@@ -3,6 +3,7 @@ pub use database::Database;
 
 mod rooms;
 pub use rooms::CreateRoomOutcome;
+pub use rooms::DeleteRoomOutcome;
 pub use rooms::GetRoomOutcome;
 
 mod session;
