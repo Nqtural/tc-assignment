@@ -33,6 +33,7 @@ async fn main() -> Result<()> {
         .route("/rooms/join/{code}", post(routes::rooms::join))
         .route("/rooms/{id}/delete", delete(routes::rooms::delete))
         .route("/rooms/{id}/invitation-code", get(routes::rooms::invitation_code))
+        .route("/rooms/{id}/leave", post(routes::rooms::leave))
         .with_state(database)
         .layer(CookieManagerLayer::new())
         .layer(cors_layer);

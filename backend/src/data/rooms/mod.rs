@@ -12,3 +12,6 @@ pub use invitation_code::InvitationCodeOutcome;
 
 mod join;
 pub use join::JoinRoomOutcome;
+
+mod leave;
+pub use leave::LeaveRoomOutcome;

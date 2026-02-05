@@ -12,3 +12,6 @@ pub use invitation_code::invitation_code;
 
 mod join;
 pub use join::join;
+
+mod leave;
+pub use leave::leave;
