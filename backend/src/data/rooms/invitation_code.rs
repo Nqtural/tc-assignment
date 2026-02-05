@@ -53,7 +53,7 @@ impl Database {
         if let Some(code) = conn
             .interact(move |conn| {
                 conn.query_row(
-                    "SELECT key FROM invitation_keys WHERE room_id = ?1",
+                    "SELECT code FROM invitation_codes WHERE room_id = ?1",
                     params![room_id],
                     |row| row.get(0),
                 )
@@ -72,7 +72,7 @@ impl Database {
             let exists: bool = conn
                 .interact(move |conn| {
                     conn.query_row(
-                        "SELECT EXISTS(SELECT 1 FROM invitation_keys WHERE key = ?1)",
+                        "SELECT EXISTS(SELECT 1 FROM invitation_codes WHERE code = ?1)",
                         params![candidate_clone],
                         |row| row.get(0),
                     )
@@ -88,7 +88,7 @@ impl Database {
         let code_clone = code.clone();
         conn.interact(move |conn| {
             conn.execute(
-                "INSERT INTO invitation_keys (room_id, key) VALUES (?1, ?2)",
+                "INSERT INTO invitation_codes (room_id, code) VALUES (?1, ?2)",
                 params![room_id, code_clone],
             )
         })

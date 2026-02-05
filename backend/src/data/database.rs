@@ -78,13 +78,13 @@ impl Database {
                     [],
                 )?;
 
-                // Refresh keys every server restart
-                conn.execute("DROP TABLE IF EXISTS invitation_keys", [])?;
+                // Reset codes every server restart
+                conn.execute("DROP TABLE IF EXISTS invitation_codes", [])?;
                 conn.execute(
-                    "CREATE TABLE invitation_keys (
+                    "CREATE TABLE invitation_codes (
                         room_id INTEGER NOT NULL,
-                        key STRING NOT NULL,
-                        PRIMARY KEY (room_id, key)
+                        code STRING NOT NULL,
+                        PRIMARY KEY (room_id, code)
                     )",
                     [],
                 )?;

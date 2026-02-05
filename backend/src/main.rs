@@ -35,6 +35,7 @@ async fn main() -> Result<()> {
         .route("/health", get(routes::health::health))
         .route("/rooms/create", post(routes::rooms::create))
         .route("/rooms/get", get(routes::rooms::get))
+        .route("/rooms/join/{code}", post(routes::rooms::join))
         .route("/rooms/{id}/delete", delete(routes::rooms::delete))
         .route("/rooms/{id}/invitation-code", get(routes::rooms::invitation_code))
         .with_state(database)

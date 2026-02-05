@@ -6,6 +6,7 @@ pub use rooms::CreateRoomOutcome;
 pub use rooms::DeleteRoomOutcome;
 pub use rooms::GetRoomOutcome;
 pub use rooms::InvitationCodeOutcome;
+pub use rooms::JoinRoomOutcome;
 
 mod session;
 pub use session::LoginOutcome;
