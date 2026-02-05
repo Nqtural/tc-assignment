@@ -11,12 +11,7 @@ use backend::cors;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    
-    let mut dev = false;
-
-    for arg in env::args().skip(1) {
-        dev = matches!(arg.as_str(), "--dev");
-    }
+    let dev = env::args().skip(1).any(|arg| arg == "--dev");
 
     let cors_layer = if dev {
         println!("WARN: running in development mode");
