@@ -1,7 +1,7 @@
 use tower_http::cors::CorsLayer;
 use http::{HeaderValue, Method, header};
 
-pub fn dev_cors() -> CorsLayer {
+pub fn dev() -> CorsLayer {
     CorsLayer::new()
         .allow_origin([
             HeaderValue::from_static("http://localhost:5173"),
@@ -18,4 +18,23 @@ pub fn dev_cors() -> CorsLayer {
             header::AUTHORIZATION,
         ])
         .allow_credentials(true)
+}
+
+pub fn prod() -> CorsLayer {
+    todo!("run with --dev for now")
+    /*
+    CorsLayer::new()
+        .allow_origin(/* READ URLS FROM ENV */)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+        ])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+        ])
+        .allow_credentials(true)
+    */
 }

@@ -8,7 +8,7 @@ use tower_cookies::CookieManagerLayer;
 use std::env;
 
 use backend::{data::Database, routes};
-use backend::cors::dev_cors;
+use backend::cors;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,17 +16,15 @@ async fn main() -> Result<()> {
     let mut dev = false;
 
     for arg in env::args().skip(1) {
-        match arg.as_str() {
-            "--dev" => dev = true,
-            _ => {
-                println!(" ");
-            }
-        }
+        dev = matches!(arg.as_str(), "--dev");
     }
 
-    if dev {
-        println!("dev mode")
-    }
+    let cors_layer = if dev {
+        println!("WARN: running in development mode");
+        cors::dev()
+    } else {
+        cors::prod()
+    };
 
     let database = Database::new().await?;
 
@@ -40,7 +38,7 @@ async fn main() -> Result<()> {
         .route("/rooms/get", get(routes::rooms::get))
         .with_state(database)
         .layer(CookieManagerLayer::new())
-        .layer(dev_cors());
+        .layer(cors_layer);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
