@@ -5,6 +5,6 @@ curl -X POST 0.0.0.0:3000/auth/login \
 	-d '
 {
 	"password": "Pass123",
-	"email": "email@example.com"
+	"email": "email2@example.com"
 }
 '

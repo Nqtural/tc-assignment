@@ -1,4 +1,6 @@
-backend/target/
+backend/test-scripts/cookies.txt
+backend/cookies.txt
 backend/db.sqlite3
+backend/target/
 
 frontend/node_modules/

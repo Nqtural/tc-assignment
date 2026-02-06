@@ -47,7 +47,6 @@ const email = ref("");
 const password = ref("");
 const error = ref("");
 
-/* NYI */
 function handleLogin() {
 	error.value = "";
 
@@ -95,12 +94,13 @@ function handleLogin() {
       if (!data) return;
 
       console.log("Login success:", data);
+      window.location.href = "/";
+      
     })
     .catch(() => {
       console.log("Login failed: network error");
       error.value = "Network error";
     });
-
 
 }
 </script>

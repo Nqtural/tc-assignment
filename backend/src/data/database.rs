@@ -1,0 +1,100 @@
+use anyhow::{Result, anyhow};
+use deadpool_sqlite::{Config, Pool, Runtime};
+use deadpool_sqlite::rusqlite::{self, params};
+
+#[derive(Clone)]
+pub struct Database {
+    pub pool: Pool,
+}
+
+impl Database {
+    /// Creates a new instance and initializes the database.
+    ///
+    /// This sets up the required database schema if it does not already exist,
+    /// ensures a default admin user is present, and recreates the `sessions` table.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - the database configuration or connection pool cannot be created
+    /// - a database connection cannot be acquired from the pool
+    /// - a database task fails to run or complete
+    /// - executing any of the schema initialization or setup SQL statements fails
+    pub async fn new() -> Result<Self> {
+        let cfg = Config::new("db.sqlite3");
+        let pool = cfg.create_pool(Runtime::Tokio1)?;
+
+        {
+            let conn = pool.get().await?;
+            conn.interact(|conn| {
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        surname TEXT NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        email TEXT NOT NULL
+                    )",
+                    [],
+                )?;
+
+                conn.execute(
+                    "INSERT INTO users (id, name, surname, password_hash, email)
+                    VALUES (1, ?1, ?2, ?3, ?4)
+                    ON CONFLICT(id) DO UPDATE SET
+                        name = excluded.name,
+                        surname = excluded.surname,
+                        password_hash = excluded.password_hash,
+                        email = excluded.email",
+                        params!["Admin", "Admin", "passwd_hash", "admin@example.com"],
+                )?;
+                
+                conn.execute("DROP TABLE IF EXISTS sessions", [])?;
+                conn.execute(
+                    "CREATE TABLE sessions (
+                        uuid TEXT PRIMARY KEY,
+                        user_id INTEGER NOT NULL
+                    )",
+                    [],
+                )?;
+
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS rooms (
+                        id INTEGER PRIMARY KEY,
+                        owner INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        description TEXT
+                    )",
+                    [],
+                )?;
+
+                // To link users to rooms
+                conn.execute(
+                    "CREATE TABLE IF NOT EXISTS room_members (
+                        room_id INTEGER NOT NULL,
+                        user_id INTEGER NOT NULL,
+                        PRIMARY KEY (room_id, user_id)
+                    )",
+                    [],
+                )?;
+
+                // Reset codes every server restart
+                conn.execute("DROP TABLE IF EXISTS invitation_codes", [])?;
+                conn.execute(
+                    "CREATE TABLE invitation_codes (
+                        room_id INTEGER NOT NULL,
+                        code STRING NOT NULL,
+                        PRIMARY KEY (room_id, code)
+                    )",
+                    [],
+                )?;
+
+                Ok::<_, rusqlite::Error>(())
+            })
+                .await
+                .map_err(|e| anyhow!("{e}"))??;
+        }
+
+        Ok(Self { pool })
+    }
+}
