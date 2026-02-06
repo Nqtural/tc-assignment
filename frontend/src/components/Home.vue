@@ -1,4 +1,5 @@
 <template>
+    <Navbar />
     <div class="classrooms-page">
     <!-- Header with search and subject filter only -->
     <header class="page-header">
@@ -72,6 +73,7 @@
 </template>
 
 <script setup>
+import Navbar from './Navbar.vue'
 </script>
 
 <style scoped>
