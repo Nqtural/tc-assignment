@@ -52,7 +52,7 @@
                 />
             </div>
 
-        <button type="submit">Login</button>
+        <button type="submit">Register</button>
         </form>
 
         <p v-if="error" class="error">{{ error }}</p>
@@ -62,25 +62,49 @@
 <script setup>
 import { ref } from "vue";
 
+const instans = ref("");
+const förnamn = ref("");
+const efternamn = ref("");
 const email = ref("");
 const password = ref("");
 const error = ref("");
 
-/* NYI */
-function _handleLogin() {
-	error.value = "";
+    async function handleRegister() {
+        error.value = "";
 
-	// basic example validation
-	if (!email.value || !password.value) {
-		error.value = "Please fill in all fields";
-		return;
-	}
+        if (!instans.value || !förnamn.value || !efternamn.value || !email.value || !password.value) {
+            error.value = "Please fill in all fields";
+            return;
+        }
 
-	// Replace this with real auth logic / API call
-	if (email.value === "admin@example.com" && password.value === "password") {
-		alert("Logged in!");
-	} else {
-		error.value = "Invalid credentials";
+        try {
+            const res = await fetch(`http://${instans.value}/auth/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: förnamn.value,
+                surname: efternamn.value,
+                email: email.value,
+                password: password.value,
+            }),
+        });
+
+        const data = await res.json();
+
+        console.log(data);
+
+        if (res.ok) {
+            console.log("Register success:", data);
+            window.location.href = "/";
+        } else {
+            error.value = data.message || "Registration failed";
+        }
+    } catch (err) {
+            error.value = "An error occurred. Please try again.";
+            console.error("Registration error:", err);
+
 	}
 }
 </script>
