@@ -78,7 +78,7 @@ npm run dev
 The project uses a mixture of technologies:
 
 - **Frontend**: HTML, CSS, JavaScript, Vue.js, Node.js  
-- **Backend**: Rust with REST API (assumed)  
+- **Backend**: Rust with REST API 
 - **JavaScript tooling** and modern web development practices
 - **Testing**: Shell
 
