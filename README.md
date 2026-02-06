@@ -49,7 +49,7 @@ This project can also serve as a **starter template** for similar full-stack edu
 ### Technical Features
 -  **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 -  **Authentication** - Secure user login and session management
--  **Real-time Updates** - Live data synchronization (if applicable)
+-  **Real-time Updates** - Live data synchronization 
 -  **Modern UI** - Clean, intuitive interface built with Vue.js
 -  **RESTful API** - Well-structured backend for easy integration
 
