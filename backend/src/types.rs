@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct NewUser {
@@ -15,4 +15,17 @@ pub struct User {
     pub surname: String,
     pub password_hash: String,
     pub email: String,
+}
+
+#[derive(Deserialize)]
+pub struct NewRoom {
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Serialize)]
+pub struct Room {
+    pub id: i32,
+    pub name: String,
+    pub description: String,
 }
