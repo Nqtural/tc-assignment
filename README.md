@@ -105,7 +105,7 @@ cargo --version
 - Project Link: [https://github.com/Nqtural/tc-assignment](https://github.com/Nqtural/tc-assignment)
 
 **TC Stenungsund**
-- Website: [TC Stenungsund](https://www.tcstenungsund.se)
+- Website: [TC Stenungsund](https://www.stenungsund.se/gymnasiet/nosnasgymnasiet/om-nosnasgymnasiet/vi-ar-ett-teknikcollege)
 
 ---
 
