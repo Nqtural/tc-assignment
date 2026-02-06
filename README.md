@@ -77,10 +77,18 @@ npm run dev
 
 The project uses a mixture of technologies:
 
-- **Frontend**: HTML, CSS, JavaScript, Vue.js  
-- **Backend**: Node.js / REST API (assumed)  
+- **Frontend**: HTML, CSS, JavaScript, Vue.js, Node.js  
+- **Backend**: Rust with REST API (assumed)  
 - **JavaScript tooling** and modern web development practices
 
+
+## Prerequisites
+```bash
+node --version
+npm --version
+rustc --version
+cargo --version
+```
 
 ## Contributing
 1. Fork the repository.
@@ -119,6 +127,6 @@ This project is licensed under the [GNU Affero General Public License](https://w
 
 Made with by the TC Stenungsund community
 
-[Report Bug](https://github.com/Nqtural/tc-assignment/issues) · [Request Feature](https://github.com/Nqtural/tc-assignment/issues) · [Documentation](https://github.com/Nqtural/tc-assignment/wiki)
+[Report Bug](https://github.com/Nqtural/tc-assignment/issues) · [Request Feature](https://github.com/Nqtural/tc-assignment/issues)
 
 </div>
