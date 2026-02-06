@@ -1,3 +1,4 @@
+use std::env;
 use tower_http::cors::CorsLayer;
 use http::{HeaderValue, Method, header};
 
@@ -21,10 +22,16 @@ pub fn dev() -> CorsLayer {
 }
 
 pub fn prod() -> CorsLayer {
-    todo!("run with --dev for now")
-    /*
+    let origins = env::var("CORS_ORIGINS")
+        .expect("CORS_ORIGINS environment variable must be set");
+
+    let allowed_origins: Vec<HeaderValue> = origins
+        .split(',')
+        .filter_map(|url| HeaderValue::from_str(url.trim()).ok())
+        .collect();
+
     CorsLayer::new()
-        .allow_origin(/* READ URLS FROM ENV */)
+        .allow_origin(allowed_origins)
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -36,5 +43,4 @@ pub fn prod() -> CorsLayer {
             header::AUTHORIZATION,
         ])
         .allow_credentials(true)
-    */
 }
