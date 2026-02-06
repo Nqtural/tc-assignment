@@ -22,14 +22,16 @@ pub fn dev() -> CorsLayer {
 }
 
 pub fn prod() -> CorsLayer {
-    let origins: Vec<HeaderValue> = env::var("CORS_ORIGINS")
-        .expect("CORS_ORIGINS must be set")
+    let origins = env::var("CORS_ORIGINS")
+        .expect("CORS_ORIGINS environment variable must be set");
+
+    let allowed_origins: Vec<HeaderValue> = origins
         .split(',')
-        .map(|s| s.parse().expect("invalid origin"))
+        .filter_map(|url| HeaderValue::from_str(url.trim()).ok())
         .collect();
 
     CorsLayer::new()
-        .allow_origin(origins)
+        .allow_origin(allowed_origins)
         .allow_methods([
             Method::GET,
             Method::POST,
@@ -42,4 +44,3 @@ pub fn prod() -> CorsLayer {
         ])
         .allow_credentials(true)
 }
-
