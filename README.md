@@ -120,7 +120,7 @@ This project is licensed under the [GNU Affero General Public License](https://w
 - [Vue.js Documentation](https://vuejs.org/guide/introduction.html)
 - [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
 - [REST API Design Guidelines](https://restfulapi.net/)
-- [Git Workflow Guide](https://www.atlassian.com/git/tutorials/comparing-workflows)
+- [Git Workflow Guide](https://www.atlassian.com/git/tutorials/comparing-workflows/)
 
 ---
 
